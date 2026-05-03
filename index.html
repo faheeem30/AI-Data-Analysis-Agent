@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>DataMind — AI Data Analysis Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f12;--surface:#161920;--surface2:#1e2230;--surface3:#252a3a;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --purple:#7c6dfa;--green:#3ecf8e;--orange:#fb923c;--blue:#60a5fa;
+  --pink:#c084fc;--red:#f87171;--yellow:#fbbf24;
+  --text:#e8eaf0;--muted:#7a7f96;--radius:10px;--radius-sm:6px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:grid;grid-template-columns:280px 1fr;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+aside{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-top{padding:16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--purple),var(--pink));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.logo h1{font-size:15px;font-weight:600}
+.logo small{font-size:10px;color:var(--muted);display:block}
+
+.upload-zone{border:1.5px dashed var(--border2);border-radius:var(--radius);padding:14px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;margin-bottom:8px}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--purple);background:rgba(124,109,250,0.04)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-zone p{font-size:11px;color:var(--muted);line-height:1.5;margin-top:5px}
+.upload-zone strong{color:var(--purple)}
+.upload-icon{font-size:20px}
+.prog-bar{height:3px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:6px;display:none}
+.prog-fill{height:100%;background:var(--purple);width:0%;transition:width 0.3s}
+
+/* Question input */
+.q-wrap{position:relative;margin-bottom:8px}
+.q-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:11px;padding:8px 10px;outline:none;transition:border-color 0.2s;resize:none;min-height:52px;line-height:1.4}
+.q-input:focus{border-color:var(--purple)}
+.q-input::placeholder{color:var(--muted)}
+
+.analyze-btn{width:100%;padding:9px;background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.analyze-btn:hover{opacity:0.88}
+.analyze-btn:disabled{opacity:0.45;cursor:not-allowed}
+
+/* File list */
+.sidebar-files{flex:1;overflow-y:auto;padding:10px 14px}
+.sidebar-files::-webkit-scrollbar{width:3px}
+.sidebar-files::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.sec-lbl{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+
+.file-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;transition:border-color 0.15s;overflow:hidden}
+.file-card:hover{border-color:var(--border2)}
+.file-card.active{border-color:var(--purple)}
+.file-card-head{padding:7px 10px;display:flex;align-items:center;gap:7px}
+.file-icon{font-size:13px;flex-shrink:0}
+.file-name{flex:1;font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-rows{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;flex-shrink:0}
+.file-del{width:17px;height:17px;border:none;background:transparent;color:var(--muted);cursor:pointer;border-radius:3px;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all 0.1s;flex-shrink:0}
+.file-del:hover{background:rgba(248,113,113,0.15);color:var(--red)}
+
+/* MAIN */
+main{display:flex;flex-direction:column;overflow:hidden}
+.main-head{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(62,207,142,0.15)}
+.main-head h2{font-size:14px;font-weight:500}
+.head-badge{margin-left:auto;font-size:11px;color:var(--muted);background:var(--surface2);padding:3px 10px;border-radius:20px;border:1px solid var(--border)}
+
+/* Tabs */
+.tabs-bar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 16px;overflow-x:auto}
+.tabs-bar::-webkit-scrollbar{height:0}
+.tab-btn{padding:9px 14px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;white-space:nowrap}
+.tab-btn.active{color:var(--purple);border-bottom-color:var(--purple)}
+
+/* Panels */
+.panel{flex:1;overflow-y:auto;padding:18px 20px;display:none}
+.panel.active{display:block}
+.panel::-webkit-scrollbar{width:4px}
+.panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* Loading overlay */
+.loading{position:absolute;inset:0;background:rgba(13,15,18,0.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:50;backdrop-filter:blur(4px)}
+.loading.show{display:flex}
+.loading-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-steps{display:flex;flex-direction:column;gap:6px;min-width:220px}
+.loading-step{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);transition:color 0.3s}
+.loading-step.done{color:var(--green)}
+.loading-step.active{color:var(--purple)}
+.step-icon{width:16px;height:16px;border-radius:50%;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+.loading-step.done .step-icon{background:var(--green);border-color:var(--green);color:#fff}
+.loading-step.active .step-icon{background:var(--purple);border-color:var(--purple);color:#fff;animation:pulse2 1s ease infinite}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* KPI cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:18px}
+.kpi-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent-color,var(--purple))}
+.kpi-label{font-size:10px;color:var(--muted);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:5px}
+.kpi-value{font-size:22px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace;line-height:1.1}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* Charts grid */
+.charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:18px}
+.chart-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color 0.2s}
+.chart-card:hover{border-color:var(--border2)}
+.chart-card.wide{grid-column:1/-1}
+.chart-card-head{padding:9px 14px;background:var(--surface3);border-bottom:1px solid var(--border);font-size:12px;color:var(--text);font-weight:500;display:flex;align-items:center;gap:7px}
+.chart-card-head span.chip{font-size:9px;color:var(--muted);background:var(--surface2);padding:2px 7px;border-radius:10px;border:1px solid var(--border);margin-left:auto}
+.chart-card img{width:100%;display:block;min-height:220px;object-fit:contain;background:var(--surface2)}
+
+/* Report */
+.report-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;line-height:1.8}
+.report-card h1,.report-card h2,.report-card h3{color:var(--text);margin:14px 0 6px}
+.report-card h1{font-size:18px}
+.report-card h2{font-size:14px;color:var(--purple)}
+.report-card h3{font-size:13px;color:var(--blue)}
+.report-card p{font-size:13px;color:var(--muted);margin-bottom:8px}
+.report-card ul,.report-card ol{margin:6px 0 10px 18px}
+.report-card li{font-size:13px;color:var(--muted);margin-bottom:4px}
+.report-card strong{color:var(--text)}
+.report-card code{background:var(--surface3);padding:1px 5px;border-radius:3px;font-family:'DM Mono',monospace;font-size:11px;color:var(--blue)}
+
+/* SQL results table */
+.sql-section{margin-bottom:16px}
+.sql-section h4{font-size:12px;font-weight:600;color:var(--green);margin-bottom:4px;font-family:'DM Mono',monospace}
+.sql-query{background:var(--surface3);padding:6px 10px;border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:10px;color:var(--blue);margin-bottom:6px;white-space:pre-wrap;word-break:break-all}
+.sql-reason{font-size:10px;color:var(--muted);margin-bottom:8px;font-style:italic}
+.results-wrap{overflow-x:auto;max-height:200px;border:1px solid var(--border);border-radius:var(--radius-sm)}
+.results-table{width:100%;font-size:10px;border-collapse:collapse;min-width:200px}
+.results-table th{background:var(--surface3);padding:5px 8px;text-align:left;font-weight:600;color:var(--muted);position:sticky;top:0;font-family:'DM Mono',monospace;white-space:nowrap}
+.results-table td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.results-table tr:last-child td{border-bottom:none}
+.results-table tr:hover td{background:var(--surface3)}
+
+/* Plan nodes */
+.plan-flow{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.plan-node{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 13px;min-width:160px;flex:1}
+.plan-node-num{font-size:10px;color:var(--purple);font-family:'DM Mono',monospace;font-weight:600;margin-bottom:3px}
+.plan-node-name{font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px}
+.plan-node-tool{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace}
+
+/* Node log */
+.node-log{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.node-pill{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:500;font-family:'DM Mono',monospace}
+.node-pill.ok{background:rgba(62,207,142,0.12);color:var(--green);border:1px solid rgba(62,207,142,0.25)}
+.node-pill.error{background:rgba(248,113,113,0.12);color:var(--red);border:1px solid rgba(248,113,113,0.25)}
+
+/* Stats table */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.stats-block{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:13px}
+.stats-block h4{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
+.stat-row:last-child{border-bottom:none}
+.stat-row .k{color:var(--muted);font-family:'DM Mono',monospace}
+.stat-row .v{color:var(--text);font-weight:500}
+
+/* Empty state */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px;color:var(--muted);text-align:center;padding:40px}
+.empty-icon{font-size:44px;opacity:0.3}
+.empty h3{font-size:16px;font-weight:500;color:var(--text)}
+.empty p{font-size:12px;line-height:1.6;max-width:320px}
+
+/* SQL Editor tab */
+.sql-editor-wrap{margin-bottom:12px}
+.sql-editor-wrap label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px}
+.sql-editor{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);color:var(--blue);font-family:'DM Mono',monospace;font-size:11px;padding:10px;resize:vertical;min-height:100px;outline:none;line-height:1.5;transition:border-color 0.2s}
+.sql-editor:focus{border-color:var(--purple)}
+.btn-row{display:flex;gap:8px;margin-bottom:14px}
+.btn-run{padding:8px 18px;background:var(--purple);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;transition:opacity 0.2s}
+.btn-run:hover{opacity:0.85}
+.btn-clear{padding:8px 14px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:12px;cursor:pointer;transition:all 0.15s}
+.btn-clear:hover{border-color:var(--border2);color:var(--text)}
+
+.main-wrap{position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column}
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="sidebar-top">
+    <div class="logo">
+      <div class="logo-icon">🧠</div>
+      <div><h1>DataMind</h1><small>LangGraph Analysis Agent</small></div>
+    </div>
+    <div class="upload-zone" id="drop-zone">
+      <input type="file" id="file-input" accept=".csv,.xlsx,.xls,.db,.sqlite"/>
+      <div class="upload-icon">📂</div>
+      <p>Drop <strong>CSV · Excel · SQLite</strong><br/>or click to browse</p>
+    </div>
+    <div class="prog-bar" id="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+    <textarea class="q-input" id="q-input" placeholder="Optional: Ask a specific question about your data…" rows="2"></textarea>
+    <button class="analyze-btn" id="analyze-btn" onclick="runAnalysis()" disabled>
+      <span>🧠</span> Run Analysis Agent
+    </button>
+  </div>
+
+  <div class="sidebar-files" id="sidebar-files">
+    <div class="sec-lbl">Uploaded Files</div>
+    <div id="file-list"><p style="font-size:12px;color:var(--muted)">No files yet.</p></div>
+  </div>
+</aside>
+
+<div class="main-wrap">
+  <main>
+    <div class="main-head">
+      <div class="status-dot"></div>
+      <h2>AI Data Analysis Dashboard</h2>
+      <div class="head-badge" id="head-badge">No file selected</div>
+    </div>
+
+    <div class="tabs-bar">
+      <button class="tab-btn active" onclick="switchTab('overview')"  id="tb-overview">📊 Overview</button>
+      <button class="tab-btn"        onclick="switchTab('charts')"    id="tb-charts">📈 Charts</button>
+      <button class="tab-btn"        onclick="switchTab('report')"    id="tb-report">📝 Report</button>
+      <button class="tab-btn"        onclick="switchTab('sql')"       id="tb-sql">🔍 SQL Results</button>
+      <button class="tab-btn"        onclick="switchTab('stats')"     id="tb-stats">📋 Stats</button>
+      <button class="tab-btn"        onclick="switchTab('editor')"    id="tb-editor">✏️ SQL Editor</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="panel active" id="panel-overview">
+      <div class="empty" id="empty-overview">
+        <div class="empty-icon">🧠</div>
+        <h3>Upload a file to begin</h3>
+        <p>DataMind uses a LangGraph agent pipeline to automatically plan, analyze, visualize, and report on your data.</p>
+      </div>
+      <div id="overview-content" style="display:none">
+        <div id="kpi-grid" class="kpi-grid"></div>
+        <div id="plan-section"></div>
+        <div id="node-log-section"></div>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="panel" id="panel-charts">
+      <div class="empty" id="empty-charts">
+        <div class="empty-icon">📈</div>
+        <h3>No charts yet</h3>
+        <p>Run the analysis agent to auto-generate charts.</p>
+      </div>
+      <div id="charts-grid" class="charts-grid" style="display:none"></div>
+    </div>
+
+    <!-- REPORT -->
+    <div class="panel" id="panel-report">
+      <div class="empty" id="empty-report">
+        <div class="empty-icon">📝</div>
+        <h3>No report yet</h3>
+        <p>Run the analysis agent to generate a written report.</p>
+      </div>
+      <div class="report-card" id="report-content" style="display:none"></div>
+    </div>
+
+    <!-- SQL RESULTS -->
+    <div class="panel" id="panel-sql">
+      <div class="empty" id="empty-sql">
+        <div class="empty-icon">🔍</div>
+        <h3>No SQL results yet</h3>
+        <p>Run the analysis agent to execute auto-planned SQL queries.</p>
+      </div>
+      <div id="sql-results-content" style="display:none"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="panel" id="panel-stats">
+      <div class="empty" id="empty-stats">
+        <div class="empty-icon">📋</div>
+        <h3>No stats yet</h3>
+        <p>Run the analysis agent to compute statistics.</p>
+      </div>
+      <div id="stats-content" style="display:none"></div>
+    </div>
+
+    <!-- SQL EDITOR -->
+    <div class="panel" id="panel-editor">
+      <div class="sql-editor-wrap">
+        <label>Write SQL to query your uploaded data directly:</label>
+        <textarea class="sql-editor" id="sql-editor" placeholder="SELECT * FROM your_table LIMIT 10;"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn-run" onclick="runEditorSQL()">▶ Run SQL</button>
+        <button class="btn-clear" onclick="document.getElementById('sql-editor').value=''">Clear</button>
+      </div>
+      <div id="editor-results"></div>
+    </div>
+  </main>
+
+  <!-- Loading overlay -->
+  <div class="loading" id="loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-steps" id="loading-steps">
+      <div class="loading-step" id="ls-planner"><div class="step-icon">1</div> Planning analysis…</div>
+      <div class="loading-step" id="ls-stats">  <div class="step-icon">2</div> Computing statistics…</div>
+      <div class="loading-step" id="ls-charts"> <div class="step-icon">3</div> Generating charts…</div>
+      <div class="loading-step" id="ls-sql">    <div class="step-icon">4</div> Running SQL queries…</div>
+      <div class="loading-step" id="ls-reporter"><div class="step-icon">5</div> Writing report…</div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart zoom modal -->
+<div class="modal-bg" id="chart-modal-bg" onclick="closeChartModal(event)" style="z-index:200">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:14px;max-width:92vw;max-height:92vh;display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span id="chart-modal-title" style="font-size:13px;font-weight:600;color:var(--text)"></span>
+      <button onclick="closeChartModal()" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1">×</button>
+    </div>
+    <img id="chart-modal-img" src="" style="max-width:85vw;max-height:80vh;object-fit:contain;border-radius:8px"/>
+  </div>
+</div>
+
+<script>
+const BASE = '';
+let allFiles = {};
+let activeFile = '';
+let analysisResult = null;
+
+// ── File upload ──────────────────────────────────────────
+const fileInput = document.getElementById('file-input');
+const dropZone  = document.getElementById('drop-zone');
+
+fileInput.addEventListener('change', () => { if(fileInput.files[0]) uploadFile(fileInput.files[0]); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag');
+  if(e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]);
+});
+
+async function uploadFile(file) {
+  const prog = document.getElementById('prog-bar');
+  const fill = document.getElementById('prog-fill');
+  prog.style.display='block'; fill.style.width='20%';
+  const fd = new FormData(); fd.append('file', file);
+  try {
+    fill.style.width='70%';
+    const r = await fetch(`${BASE}/upload`,{method:'POST',body:fd});
+    const d = await r.json();
+    fill.style.width='100%';
+    if(!r.ok){ alert('Upload failed: '+(d.detail||'unknown error')); return; }
+    await loadFiles();
+    setActiveFile(d.filename);
+  } catch(e){ alert('Network error'); }
+  setTimeout(()=>{prog.style.display='none';fill.style.width='0';},500);
+  fileInput.value='';
+}
+
+async function loadFiles() {
+  const r = await fetch(`${BASE}/files`);
+  allFiles = await r.json();
+  renderFileList();
+}
+
+function renderFileList() {
+  const list = document.getElementById('file-list');
+  const names = Object.keys(allFiles);
+  if(!names.length){ list.innerHTML='<p style="font-size:12px;color:var(--muted)">No files yet.</p>'; return; }
+  const icons = {csv:'📊',xlsx:'📗',xls:'📗',db:'🗄',sqlite:'🗄'};
+  list.innerHTML = names.map(name => {
+    const f = allFiles[name];
+    const ext = name.split('.').pop();
+    const icon = icons[ext]||'📄';
+    return `<div class="file-card ${name===activeFile?'active':''}" onclick="setActiveFile('${name.replace(/'/g,"\\'")}')">
+      <div class="file-card-head">
+        <span class="file-icon">${icon}</span>
+        <span class="file-name" title="${name}">${name}</span>
+        <span class="file-rows">${f.rows}r</span>
+        <button class="file-del" onclick="event.stopPropagation();deleteFile('${name.replace(/'/g,"\\'")}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setActiveFile(name) {
+  activeFile = name;
+  renderFileList();
+  document.getElementById('head-badge').textContent = name || 'No file selected';
+  document.getElementById('analyze-btn').disabled = !name;
+  analysisResult = null;
+  // Reset panels
+  ['overview','charts','report','sql','stats'].forEach(showEmpty);
+}
+
+async function deleteFile(name) {
+  if(!confirm(`Delete "${name}"?`)) return;
+  await fetch(`${BASE}/files/${encodeURIComponent(name)}`,{method:'DELETE'});
+  if(activeFile===name) { activeFile=''; setActiveFile(''); }
+  await loadFiles();
+}
+
+// ── Tab switching ─────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tb-${name}`).classList.add('active');
+  document.getElementById(`panel-${name}`).classList.add('active');
+}
+
+function showEmpty(name) {
+  const e = document.getElementById(`empty-${name}`);
+  if(e) e.style.display='flex';
+  const c = document.getElementById(`${name}-content`) || document.getElementById(`${name}s-grid`) || document.getElementById(`${name}-grid`);
+  if(c) c.style.display='none';
+}
+
+// ── Run analysis ──────────────────────────────────────────
+async function runAnalysis() {
+  if(!activeFile) return;
+  const question = document.getElementById('q-input').value.trim();
+  showLoading(true);
+  animateLoadingSteps();
+
+  try {
+    const r = await fetch(`${BASE}/analyze`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({filename:activeFile, question})
+    });
+    const d = await r.json();
+    showLoading(false);
+    if(!r.ok){ alert('Analysis failed: '+(d.detail||'error')); return; }
+    analysisResult = d;
+    renderDashboard(d);
+    switchTab('overview');
+  } catch(e){
+    showLoading(false);
+    alert('Network error. Is the server running?');
+  }
+}
+
+function showLoading(show) {
+  document.getElementById('loading').classList.toggle('show', show);
+  document.getElementById('analyze-btn').disabled = show;
+}
+
+let stepInterval;
+function animateLoadingSteps() {
+  const steps = ['planner','stats','charts','sql','reporter'];
+  let idx = 0;
+  steps.forEach(s => {
+    const el = document.getElementById(`ls-${s}`);
+    el.classList.remove('done','active');
+  });
+  document.getElementById(`ls-${steps[0]}`).classList.add('active');
+  stepInterval = setInterval(() => {
+    if(idx < steps.length) {
+      document.getElementById(`ls-${steps[idx]}`).classList.remove('active');
+      document.getElementById(`ls-${steps[idx]}`).classList.add('done');
+      idx++;
+      if(idx < steps.length)
+        document.getElementById(`ls-${steps[idx]}`).classList.add('active');
+      else clearInterval(stepInterval);
+    }
+  }, 1800);
+}
+
+// ── Render dashboard ──────────────────────────────────────
+function renderDashboard(d) {
+  renderKPIs(d.kpis);
+  renderPlan(d.plan, d.node_log);
+  renderCharts(d.charts);
+  renderReport(d.report);
+  renderSQLResults(d.sql_results);
+  renderStats(d.stats);
+}
+
+function renderKPIs(kpis) {
+  if(!kpis) return;
+  const grid = document.getElementById('kpi-grid');
+  const accents = ['var(--purple)','var(--green)','var(--orange)','var(--blue)','var(--pink)','var(--yellow)'];
+  const mainKPIs = [
+    {label:'Total Rows',    value: fmt(kpis.total_rows),    sub:'records',        accent:accents[0]},
+    {label:'Columns',       value: kpis.total_columns,       sub:'fields',         accent:accents[1]},
+    {label:'Missing Data',  value: kpis.missing_pct+'%',     sub:`${kpis.missing_cells} cells`, accent:kpis.missing_pct>5?'var(--red)':accents[2]},
+    {label:'Duplicates',    value: kpis.duplicates,          sub:'duplicate rows', accent:kpis.duplicates>0?'var(--red)':accents[3]},
+    {label:'Numeric Cols',  value: kpis.numeric_cols,        sub:'numeric fields', accent:accents[4]},
+    {label:'Category Cols', value: kpis.cat_cols,            sub:'text fields',    accent:accents[5]},
+  ];
+  // Add numeric means
+  let extra = [];
+  Object.entries(kpis).forEach(([k,v]) => {
+    if(k.endsWith('_mean')) extra.push({label: k.replace('_mean',' Avg'), value: fmt(v), sub:'mean value', accent:accents[0]});
+  });
+  const all = [...mainKPIs, ...extra.slice(0,3)];
+  grid.innerHTML = all.map(k => `
+    <div class="kpi-card" style="--accent-color:${k.accent}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`).join('');
+
+  document.getElementById('empty-overview').style.display = 'none';
+  document.getElementById('overview-content').style.display = 'block';
+}
+
+function renderPlan(plan, nodeLog) {
+  const sec = document.getElementById('plan-section');
+  if(!plan || !plan.steps) { sec.innerHTML=''; return; }
+  const nodes = (nodeLog||[]).map(n =>
+    `<span class="node-pill ${n.status}">${n.node} ${n.status==='ok'?'✓':'✗'}</span>`).join('');
+  sec.innerHTML = `
+    <div style="margin-bottom:12px">
+      <div class="sec-lbl" style="margin-bottom:6px">Agent Execution Log</div>
+      <div class="node-log">${nodes}</div>
+    </div>
+    <div>
+      <div class="sec-lbl" style="margin-bottom:8px">Analysis Plan — ${plan.title||''}</div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:10px;font-style:italic">${plan.objective||''}</p>
+      <div class="plan-flow">
+        ${(plan.steps||[]).map(s=>`
+          <div class="plan-node">
+            <div class="plan-node-num">Step ${s.id}</div>
+            <div class="plan-node-name">${s.name||''}</div>
+            <div class="plan-node-tool">${s.tool||''}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  document.getElementById('node-log-section').innerHTML = '';
+}
+
+function renderCharts(charts) {
+  const grid = document.getElementById('charts-grid');
+  const empty = document.getElementById('empty-charts');
+  if(!charts || !charts.length) { empty.style.display='flex'; grid.style.display='none'; return; }
+  empty.style.display='none'; grid.style.display='grid';
+
+  const labels = {
+    histogram: '📊 Distribution',
+    bar:       '📊 Bar Chart',
+    heatmap:   '🗺 Correlation Heatmap',
+    line:      '📈 Line Chart',
+    scatter:   '⚬ Scatter Plot'
+  };
+  const typeColors = {
+    histogram:'var(--purple)', bar:'var(--green)',
+    heatmap:'var(--blue)', line:'var(--orange)', scatter:'var(--pink)'
+  };
+  // heatmap and line charts look better full-width
+  const wideTypes = new Set(['heatmap','line']);
+
+  grid.innerHTML = charts.map((c,i) => {
+    const label = labels[c.type] || '📊 Chart';
+    const subtitle = c.col ? c.col : (c.x ? `${c.x} vs ${c.y}` : '');
+    const isWide = wideTypes.has(c.type);
+    const color = typeColors[c.type] || 'var(--purple)';
+    return `
+    <div class="chart-card ${isWide?'wide':''}" style="border-top:3px solid ${color}">
+      <div class="chart-card-head">
+        <span>${label}</span>
+        ${subtitle ? `<span style="color:var(--muted);font-size:11px">— ${subtitle}</span>` : ''}
+        <span class="chip">${c.type}</span>
+      </div>
+      <img src="data:image/png;base64,${c.img}"
+           alt="${c.type} chart"
+           loading="lazy"
+           style="cursor:pointer"
+           onclick="openChartModal('data:image/png;base64,${c.img}','${label}${subtitle?' — '+subtitle:''}')"/>
+    </div>`;
+  }).join('');
+}
+
+function openChartModal(src, title) {
+  const bg = document.getElementById('chart-modal-bg');
+  document.getElementById('chart-modal-img').src = src;
+  document.getElementById('chart-modal-title').textContent = title;
+  bg.classList.add('open');
+}
+function closeChartModal(e) {
+  if(!e || e.target === document.getElementById('chart-modal-bg'))
+    document.getElementById('chart-modal-bg').classList.remove('open');
+}
+
+function renderReport(report) {
+  const el = document.getElementById('report-content');
+  const empty = document.getElementById('empty-report');
+  if(!report) { empty.style.display='flex'; el.style.display='none'; return; }
+  empty.style.display='none'; el.style.display='block';
+  el.innerHTML = mdToHtml(report);
+}
+
+function renderSQLResults(results) {
+  const el = document.getElementById('sql-results-content');
+  const empty = document.getElementById('empty-sql');
+  if(!results || !results.length) { empty.style.display='flex'; el.style.display='none'; return; }
+  empty.style.display='none'; el.style.display='block';
+  el.innerHTML = results.map(r => `
+    <div class="sql-section">
+      <h4>${esc(r.name)}</h4>
+      <div class="sql-query">${esc(r.sql)}</div>
+      <div class="sql-reason">${esc(r.reason||'')}</div>
+      ${buildTable(r.rows, r.columns)}
+      <p style="font-size:10px;color:var(--muted);margin-top:4px">${r.rows.length} row(s)</p>
+    </div>`).join('');
+}
+
+function renderStats(stats) {
+  const el = document.getElementById('stats-content');
+  const empty = document.getElementById('empty-stats');
+  if(!stats) { empty.style.display='flex'; el.style.display='none'; return; }
+  empty.style.display='none'; el.style.display='block';
+
+  let html = `<div class="stats-grid">`;
+  // Column info
+  html += `<div class="stats-block"><h4>Columns</h4>`;
+  const numCols = stats.numeric_columns||[];
+  const catCols = stats.categorical_columns||[];
+  [...numCols.map(c=>({k:c,v:'numeric'})), ...catCols.map(c=>({k:c,v:'categorical'}))]
+    .forEach(({k,v})=>{ html+=`<div class="stat-row"><span class="k">${esc(k)}</span><span class="v" style="color:${v==='numeric'?'var(--blue)':'var(--orange)'}">${v}</span></div>`; });
+  html += `</div>`;
+
+  // Missing values
+  html += `<div class="stats-block"><h4>Missing Values</h4>`;
+  const missing = stats.missing_values||{};
+  if(Object.keys(missing).length===0)
+    html += `<div style="font-size:11px;color:var(--green)">✅ No missing values</div>`;
+  else
+    Object.entries(missing).forEach(([col,m])=>{
+      html+=`<div class="stat-row"><span class="k">${esc(col)}</span><span class="v" style="color:var(--red)">${m.count} (${m.pct}%)</span></div>`;
+    });
+  html += `</div></div>`;
+
+  // Numeric summary
+  if(stats.numeric_summary) {
+    html += `<div class="stats-block" style="grid-column:1/-1"><h4>Numeric Summary</h4>`;
+    const ns = stats.numeric_summary;
+    const metrics = Object.keys(ns);
+    const statKeys = ['count','mean','std','min','25%','50%','75%','max'];
+    html += `<div style="overflow-x:auto"><table class="results-table"><thead><tr><th>metric</th>${metrics.map(m=>`<th>${esc(m)}</th>`).join('')}</tr></thead><tbody>`;
+    statKeys.forEach(sk => {
+      html += `<tr><td style="color:var(--muted)">${sk}</td>`;
+      metrics.forEach(m => {
+        const v = ns[m][sk];
+        html += `<td>${v!=null?Number(v).toFixed(2):'-'}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += `</tbody></table></div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ── SQL Editor ────────────────────────────────────────────
+async function runEditorSQL() {
+  if(!activeFile){ alert('Select a file first.'); return; }
+  const sql = document.getElementById('sql-editor').value.trim();
+  if(!sql) return;
+  const res = document.getElementById('editor-results');
+  res.innerHTML='<p style="font-size:11px;color:var(--muted)">Running…</p>';
+  try {
+    const r = await fetch(`${BASE}/quick-sql`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({filename:activeFile, sql})
+    });
+    const d = await r.json();
+    if(!r.ok){ res.innerHTML=`<p style="color:var(--red);font-size:11px">❌ ${esc(d.detail)}</p>`; return; }
+    res.innerHTML=`<p style="font-size:10px;color:var(--muted);margin-bottom:6px">${d.count} row(s)</p>${buildTable(d.rows,d.columns)}`;
+  } catch(e){ res.innerHTML=`<p style="color:var(--red);font-size:11px">❌ Network error</p>`; }
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function buildTable(rows, cols) {
+  if(!rows||!rows.length) return '<p style="font-size:11px;color:var(--muted)">No rows.</p>';
+  if(!cols) cols = Object.keys(rows[0]);
+  return `<div class="results-wrap"><table class="results-table">
+    <thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(row=>`<tr>${cols.map(c=>`<td title="${esc(String(row[c]??''))}">${esc(String(row[c]??''))}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function fmt(n) {
+  if(n==null) return '-';
+  if(typeof n === 'number' && n >= 1000) return n.toLocaleString();
+  return n;
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function mdToHtml(md) {
+  return md
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`(.+?)`/g,'<code>$1</code>')
+    .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/s,'<ul>$1</ul>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/^(?!<[hul])/gm,'<p>')
+    .replace(/(?<![>])$/gm,'</p>');
+}
+
+// ── Init ──────────────────────────────────────────────────
+loadFiles();
+</script>
+</body>
+</html>
