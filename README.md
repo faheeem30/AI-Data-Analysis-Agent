@@ -14,10 +14,12 @@ DataMind automates the complete data analysis workflow. Upload a dataset (CSV, E
 
 ** Overview Dashboard**
 
+
 <img width="1907" height="964" alt="image" src="https://github.com/user-attachments/assets/eed64c37-7e96-4924-bca6-b0f4e4248e5d" />
 Displays dataset KPIs: rows, columns, missing values, duplicates, and column averages.
 
 ** Charts**
+
 <img width="1910" height="975" alt="image" src="https://github.com/user-attachments/assets/34766590-d30b-43d1-9f9b-59deaa11ca5d" />
 - Histogram — distribution of numeric columns
 - Bar Charts — top categories by count or value
@@ -26,6 +28,7 @@ Displays dataset KPIs: rows, columns, missing values, duplicates, and column ave
 - Heatmaps — correlation matrix for all numeric columns
 
 ** AI Report**
+
 <img width="1911" height="975" alt="image" src="https://github.com/user-attachments/assets/5862abd1-e8c1-4bb5-bc87-7d4cdabe387c" />
 - Correlation insights
 - Distribution analysis
@@ -33,14 +36,17 @@ Displays dataset KPIs: rows, columns, missing values, duplicates, and column ave
 - Business recommendations
 
 ** SQL Results**
+
 <img width="1911" height="969" alt="image" src="https://github.com/user-attachments/assets/9b2caa86-fda2-4f35-acc7-d4222becab27" />
 Auto-planned queries: top products, regional performance, discount analysis, and more.
 
 ** Stats**
+
 <img width="1911" height="926" alt="image" src="https://github.com/user-attachments/assets/118dec4a-e162-4497-8f56-ca46868dd794" />
 Column types, missing value counts, and full numeric summary statistics.
 
 ** SQL Editor**
+
 <img width="1915" height="933" alt="image" src="https://github.com/user-attachments/assets/b7372185-8764-48da-8cf6-8aa0f06f4721" />
 Run custom SQL queries directly on your uploaded data.
 
